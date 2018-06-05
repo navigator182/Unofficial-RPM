@@ -1,0 +1,26 @@
+modules {
+  module {
+    name = "udpconn"
+    language = "python"
+    param RefreshRate {
+      value = 5
+    }
+  }
+}
+
+collection_group {
+  collect_every = 10
+  time_threshold = 20
+  metric {
+    name = "udp_established"
+    value_threshold = 1.0
+  }
+  metric {
+    name = "udp_unconnected"
+    value_threshold = 1.0
+  }
+  metric {
+    name = "udp_unknown"
+    value_threshold = 1.0
+  }
+}

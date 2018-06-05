@@ -1,0 +1,113 @@
+#!/bin/sh
+#
+# chkconfig: - 20 80
+# description: gmetad startup script
+#
+GMETAD=/usr/sbin/gmetad
+RRDCACHED=/usr/bin/rrdcached
+
+. /etc/rc.d/init.d/functions
+
+test -f /etc/sysconfig/gmetad && . /etc/sysconfig/gmetad
+
+#[[ -S /var/rrdtool/rrdcached/rrdcached.sock ]] && RRDCACHED_ADDRESS="/var/rrdtool/rrdcached/rrdcached.sock"
+#export RRDCACHED_ADDRESS
+
+start() {
+    [ -x $RRDCACHED ] || exit 3
+    echo -n "Starting RRDCACHED: "
+    daemon $RRDCACHED -s ganglia -m 777 -w 1800 -l /var/rrdtool/rrdcached/rrdcached.sock
+    RETVAL_R=$?
+    echo
+    [ $RETVAL_R -eq 0 ] && touch /var/lock/subsys/rrdcached
+
+    [ -S /var/rrdtool/rrdcached/rrdcached.sock ] || exit 4
+    RRDCACHED_ADDRESS="/var/rrdtool/rrdcached/rrdcached.sock"
+    export RRDCACHED_ADDRESS
+
+    [ -x $GMETAD ] || exit 5
+    [ -f /etc/ganglia/gmetad.conf ] || exit 6
+    echo -n "Starting GANGLIA gmetad: "
+    daemon $GMETAD
+    RETVAL=$?
+    echo
+    [ $RETVAL -eq 0 ] && touch /var/lock/subsys/gmetad
+    return $RETVAL
+}
+
+stop() {
+    echo -n "Shutting down GANGLIA gmetad: "
+    killproc $GMETAD
+    RETVAL=$?
+    echo
+    [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/gmetad
+    [ $RETVAL -eq 0 ] || exit 7
+
+    echo -n "Shutting down RRDCACHED: "
+    killproc $RRDCACHED
+    RETVAL_R=$?
+    echo
+    [ $RETVAL_R -eq 0 ] && rm -f /var/lock/subsys/rrdcached
+    return $RETVAL_R
+}
+
+restart() {
+    stop
+    start
+}
+
+reload() {
+    restart
+}
+
+force_reload() {
+    restart
+}
+
+rh_status() {
+    status $RRDCACHED
+    status $GMETAD
+}
+
+rh_status_q() {
+    rh_status >/dev/null 2>&1
+}
+
+usage() {
+    echo "Usage: $0 {start|stop|status|restart|condrestart|try-restart|reload|force-reload}"
+}
+
+case "$1" in
+    start)
+	rh_status_q && exit 0
+	$1
+	;;
+    stop)
+	rh_status_q || exit 1
+	$1
+	;;
+    restart)
+	$1
+	;;
+    reload)
+	rh_status_q || exit 7
+	$1
+	;;
+    force-reload)
+	force_reload
+	;;
+    status)
+	rh_status
+	;;
+    condrestart|try-restart)
+	rh_status_q || exit 0
+	restart
+	;;
+    usage)
+	$1
+	;;
+    *)
+	usage
+	exit 2
+esac
+exit $?
