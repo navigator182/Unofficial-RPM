@@ -6,14 +6,17 @@ navigator182@gmail.com @20180605
 3.Provide SRPMs.
 
 =======
+
 gmetad:
 4.turn on rrdcached in writing rrds with ganglia_conf_files/etc/rc.d/init.d/gmetad. it optimizes so much for disk responsiveness and reduces io latency by using memory cache.
 
 =======
+
 ganglia-web:
 5.turn on rrdcached in reading rrds with ganglia_conf_files/etc/ganglia/conf.php
 
 =======
+
 ganglia-gmond:
 6.Provides some plugins that be included in ganglia sources but epel offical rpm package.
 /etc/ganglia/conf.d/
@@ -44,5 +47,6 @@ ganglia_conf_files/etc/ganglia/conf.d/udpconn.pyconf
 9.Check gmond state and restart gmond for a bug. sometimes gmetad can not fetching xml data from tcp port 8649 of the cluster proxy gmond.
 set file "ganglia_conf_filesopt/scripts/gmond_check.sh"
 and add the item in /etc/crontab
+
 # restart gmond when gmetad can not fetch xml data SALT_CRON_IDENTIFIER:common_gmond_check
 * * * * * root bash -l /opt/scripts/gmond_check.sh >/dev/null 2>&1
